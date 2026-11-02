@@ -1,0 +1,16 @@
+{
+  "name": "mic-tuning-lab",
+  "version": "0.1.0",
+  "description": "Record your voice, measure it against call and streaming targets, and tune the mic. Hardware control for the Shure MV7 and MV7+.",
+  "type": "module",
+  "license": "MIT",
+  "bin": { "mic-lab": "cli/mic-lab.js" },
+  "scripts": {
+    "start": "node cli/mic-lab.js serve",
+    "test": "node --test --test-concurrency=1 \"test/*.test.js\""
+  },
+  "engines": { "node": ">=22" },
+  "optionalDependencies": { "node-hid": "^3.1.0" },
+  "files": ["index.html", "app", "core", "adapters", "cli", "vendor", "AGENTS.md", "README.md", "LICENSE"],
+  "keywords": ["microphone", "shure", "mv7", "mv7+", "audio", "loudness", "webhid", "obs"]
+}

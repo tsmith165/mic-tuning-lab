@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mic Tuning Lab</title>
+<meta name="description" content="Record your voice, measure it against call and streaming targets, tune the mic, and compare runs.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Crect x='1' y='10' width='2.5' height='6' rx='1.25' fill='%23141413'/%3E%3Crect x='5.5' y='6' width='2.5' height='10' rx='1.25' fill='%23141413'/%3E%3Crect x='10' y='2' width='2.5' height='14' rx='1.25' fill='%232349d1'/%3E%3Crect x='14.5' y='7' width='2.5' height='9' rx='1.25' fill='%23141413'/%3E%3C/svg%3E">
+<script>
+  /* Theme before first paint: the saved choice, else the system setting */
+  (function () { let t = null; try { t = localStorage.getItem('mic-lab.theme'); } catch (e) { }
+    document.documentElement.dataset.theme = t === 'dark' || t === 'light' ? t : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; })();
+</script>
+<link rel="stylesheet" href="app/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand" id="brand"><svg viewBox="0 0 18 18" aria-hidden="true"><rect x="1" y="10" width="2.5" height="6" rx="1.25"/><rect x="5.5" y="6" width="2.5" height="10" rx="1.25"/><rect x="10" y="2" width="2.5" height="14" rx="1.25" class="t"/><rect x="14.5" y="7" width="2.5" height="9" rx="1.25"/></svg>Mic Tuning Lab</div>
+  <nav class="views" aria-label="Views"><a href="#tune" id="navTune">Tune</a><a href="#runs" id="navRuns">Runs <span class="ct" id="runCount"></span></a></nav>
+  <span class="spacer"></span>
+  <div class="seg" id="profSeg" role="group" aria-label="Tune for"><button data-v="calls">Calls</button><button data-v="youtube">YouTube</button><button data-v="twitch">Twitch</button></div>
+  <button class="iconbtn" id="themeBtn" aria-label="Switch to dark theme"><i data-i="moon"></i></button>
+  <a class="iconbtn" href="https://github.com/tsmith165/mic-tuning-lab" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source and how it measures"><i data-i="github"></i></a>
+</header>
+
+<div class="tune" id="vTune">
+  <aside class="rail" aria-label="Input and mic">
+    <section>
+      <button class="btn primary lg wide" id="micBtn"><i data-i="mic"></i>Allow microphone</button>
+      <label class="picker" id="picker" hidden><i data-i="mic"></i><span class="nm" id="devName"></span><i class="live" id="liveDot"></i><i data-i="down"></i><select id="dev" aria-label="Input"></select></label>
+      <div class="warn" id="liveWarn" role="alert" hidden></div>
+    </section>
+    <section class="level" aria-label="Level">
+      <div class="row" style="min-height:0"><span class="cap">Speech peaks</span><span class="spacer"></span><span class="st" id="lvSt"></span></div>
+      <div class="lv"><b class="num" id="lvNum">—</b><small>dBFS</small></div>
+      <div class="meter-el" id="meter"></div>
+      <div class="row" style="margin-top:14px"><span class="k" id="distLbl">Distance</span><div class="stepper" role="group" aria-labelledby="distLbl"><button id="distDn" aria-label="Closer"><i data-i="minus"></i></button><b id="distV" aria-live="polite"></b><button id="distUp" aria-label="Farther"><i data-i="plus"></i></button></div></div>
+      <div class="row"><span class="k" id="procLbl">Browser processing</span><span class="spacer"></span><button class="switch" id="procSw" role="switch" aria-checked="false" aria-labelledby="procLbl"></button></div>
+    </section>
+    <section class="hw" id="hw" aria-label="Mic settings" hidden></section>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="recbar" id="recbar">
+      <button class="btn primary lg" id="recCheck"><span class="dot"></span><span id="recLbl">Record check</span><span class="dim">43 s</span></button>
+      <button class="btn line lg" id="recSweep"><i data-i="sliders"></i>Find best settings<span class="dim">1 min</span></button>
+      <button class="btn quiet lg" id="recFree">Free talk</button>
+    </div>
+
+    <section id="idle">
+      <div class="sect-h" style="margin:4px 0 10px"><span class="cap">Quick check script</span></div>
+      <div class="script" id="script"></div>
+      <div id="idleSpec" hidden style="margin-top:24px"><div class="sect-h"><span class="cap">Live spectrum</span><span class="spacer"></span><span class="legend"><i class="sw s-you"></i>Now<i class="ln"></i>Average voice</span></div><div class="sp" id="spLive" style="height:170px"></div></div>
+    </section>
+
+    <section id="recView" style="display:flex;flex-direction:column;gap:18px" hidden>
+      <div class="rec-top"><span class="recdot"></span><b id="rvTitle"></b><span class="tm" id="rvTime"></span><span class="spacer"></span><button class="btn line" id="stopBtn"><i data-i="stop"></i>Stop</button></div>
+      <div class="prompt" aria-live="polite"><div class="cap" id="rvPhase" style="margin-bottom:12px"></div><p class="say" id="rvSay"></p><div class="nx" id="rvNext"></div></div>
+      <div class="wv" id="wvRec" style="height:150px;cursor:default"></div>
+      <table class="steps" id="steps" hidden></table>
+      <div id="recSpecBox"><div class="sect-h"><span class="cap">Live spectrum</span><span class="spacer"></span><span class="legend"><i class="sw s-you"></i>Now<i class="ln"></i>Average voice</span></div><div class="sp" id="spRec" style="height:170px"></div></div>
+    </section>
+
+    <div id="result" hidden></div>
+  </main>
+</div>
+
+<div class="runs" id="vRuns" hidden>
+  <aside class="runlist" aria-label="Runs">
+    <div class="rl-head"><h2>Runs</h2><span class="ct" id="rlCount"></span>
+      <button class="iconbtn sm" id="importBtn" aria-label="Import runs or WAV files" title="Import runs or WAV files"><i data-i="upload"></i></button>
+      <button class="iconbtn sm" id="exportBtn" aria-label="Export all runs" title="Export all runs"><i data-i="download"></i></button>
+      <input type="file" id="importFile" accept=".tar,.json,.wav,application/x-tar,audio/wav" multiple hidden></div>
+    <div class="trendbox" id="trendBox"><div class="trend-el" id="trend" role="img" aria-label="Score of each run"></div></div>
+    <div id="runlist"></div>
+    <div class="rl-foot" id="rlFoot"></div>
+  </aside>
+  <section class="detail" id="detail" aria-live="polite"></section>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="app/app.js"></script>
+</body>
+</html>
